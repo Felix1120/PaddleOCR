@@ -18,6 +18,7 @@ from __future__ import print_function
 
 import os
 import sys
+
 __dir__ = os.path.dirname(__file__)
 sys.path.append(__dir__)
 sys.path.append(os.path.join(__dir__, '..'))
@@ -39,6 +40,7 @@ set_paddle_flags(
 import tools.program as program
 from paddle import fluid
 from ppocr.utils.utility import initial_logger
+
 logger = initial_logger()
 from ppocr.data.reader_main import reader_main
 from ppocr.utils.save_load import init_model
@@ -56,7 +58,7 @@ def main():
     program.check_gpu(use_gpu)
 
     alg = config['Global']['algorithm']
-    assert alg in ['EAST', 'DB', 'Rosetta', 'CRNN', 'STARNet', 'RARE']
+    assert alg in ['EAST', 'DB', 'PSE', 'Rosetta', 'CRNN', 'STARNet', 'RARE']
     if alg in ['Rosetta', 'CRNN', 'STARNet', 'RARE']:
         config['Global']['char_ops'] = CharacterOps(config['Global'])
 
@@ -98,18 +100,18 @@ def main():
 
     init_model(config, train_program, exe)
 
-    train_info_dict = {'compile_program':train_compile_program,\
-        'train_program':train_program,\
-        'reader':train_loader,\
-        'fetch_name_list':train_fetch_name_list,\
-        'fetch_varname_list':train_fetch_varname_list}
+    train_info_dict = {'compile_program': train_compile_program, \
+                       'train_program': train_program, \
+                       'reader': train_loader, \
+                       'fetch_name_list': train_fetch_name_list, \
+                       'fetch_varname_list': train_fetch_varname_list}
 
-    eval_info_dict = {'program':eval_program,\
-        'reader':eval_reader,\
-        'fetch_name_list':eval_fetch_name_list,\
-        'fetch_varname_list':eval_fetch_varname_list}
+    eval_info_dict = {'program': eval_program, \
+                      'reader': eval_reader, \
+                      'fetch_name_list': eval_fetch_name_list, \
+                      'fetch_varname_list': eval_fetch_varname_list}
 
-    if alg in ['EAST', 'DB']:
+    if alg in ['EAST', 'DB','PSE']:
         program.train_eval_det_run(config, exe, train_info_dict, eval_info_dict)
     else:
         program.train_eval_rec_run(config, exe, train_info_dict, eval_info_dict)

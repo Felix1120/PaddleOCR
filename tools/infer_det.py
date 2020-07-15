@@ -134,8 +134,10 @@ def main():
                 dic = {'f_score': outs[0], 'f_geo': outs[1]}
             elif config['Global']['algorithm'] == 'DB':
                 dic = {'maps': outs[0]}
+            elif config['Global']['algorithm'] == 'PSE':
+                dic = {'maps': outs[0]}
             else:
-                raise Exception("only support algorithm: ['EAST', 'DB']")
+                raise Exception("only support algorithm: ['EAST', 'DB','PSE']")
             dt_boxes_list = postprocess(dic, ratio_list)
             for ino in range(img_num):
                 dt_boxes = dt_boxes_list[ino]

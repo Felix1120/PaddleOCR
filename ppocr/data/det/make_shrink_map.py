@@ -41,9 +41,8 @@ def polygon_area(polygon):
     return edge / 2.
 
 
-def MakeShrinkMap(data):
+def MakeShrinkMap(data, shrink_ratio = 0.4):
     min_text_size = 8
-    shrink_ratio = 0.4
 
     image = data['image']
     text_polys = data['polys']

@@ -32,6 +32,7 @@ class DetModel(object):
             params (dict): the super parameters for detection module.
         """
         global_params = params['Global']
+        self.params = params
         self.algorithm = global_params['algorithm']
 
         backbone_params = deepcopy(params["Backbone"])
@@ -97,6 +98,13 @@ class DetModel(object):
                     'shrink_mask':shrink_mask,\
                     'threshold_map':threshold_map,\
                     'threshold_mask':threshold_mask}
+            elif self.algorithm == "PSE":
+                shrink_maps = fluid.layers.data(
+                    name='shrink_maps', shape=[self.params["Head"]["out_channels"], image_shape[1], image_shape[2]], dtype='float32')
+                masks = fluid.layers.data(
+                    name='masks', shape=image_shape[1:], dtype='float32')
+                feed_list = [image, shrink_maps, masks]
+                labels = {'shrink_maps': shrink_maps, 'masks': masks}
             loader = fluid.io.DataLoader.from_generator(
                 feed_list=feed_list,
                 capacity=64,
