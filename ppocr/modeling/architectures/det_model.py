@@ -124,7 +124,7 @@ class DetModel(object):
         """
         image, labels, loader = self.create_feed(mode)
         conv_feas = self.backbone(image)
-        if self.algorithm == "DB":
+        if self.algorithm in ["DB","PSE"]:
             predicts = self.head(conv_feas, mode)
         else:
             predicts = self.head(conv_feas)
