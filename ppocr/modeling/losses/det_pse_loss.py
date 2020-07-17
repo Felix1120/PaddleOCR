@@ -51,8 +51,12 @@ class PSELoss(object):
         selected_mask = fluid.layers.logical_and((texts > 0.5), (masks > 0.5)).astype(np.float32)
 
         c = kernels.shape[1]
-        selected_mask = fluid.layers.unsqueeze(selected_mask, axes=1)
-        new_masks = fluid.layers.expand(selected_mask, expand_times=[1, c, 1, 1])
+        new_masks = []
+        for _ in range(c):
+            new_masks.append(selected_mask)
+        new_masks = fluid.layers.stack(new_masks,axis=1)
+        # selected_mask = fluid.layers.unsqueeze(selected_mask, axes=1)
+        # new_masks = fluid.layers.expand(selected_mask, expand_times=[1, c, 1, 1])
         loss_kernels = DiceLoss(kernels, gt_kernels, new_masks)
         loss_texts = self.Lambda * loss_texts
         loss_kernels = (1 - self.Lambda) * loss_kernels
