@@ -41,6 +41,10 @@ Optimizer:
   base_lr: 0.001
   beta1: 0.9
   beta2: 0.999
+  decay:
+    function: cosine_decay
+    step_each_epoch: 63
+    total_epoch: 600
 
 PostProcess:
   function: ppocr.postprocess.pse_postprocess,PSEPostProcess
