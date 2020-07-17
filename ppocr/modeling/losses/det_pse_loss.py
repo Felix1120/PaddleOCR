@@ -55,6 +55,7 @@ class PSELoss(object):
         for _ in range(c):
             new_masks.append(selected_mask)
         new_masks = fluid.layers.stack(new_masks,axis=1)
+        # 下面的处理会导致最小map学不到
         # selected_mask = fluid.layers.unsqueeze(selected_mask, axes=1)
         # new_masks = fluid.layers.expand(selected_mask, expand_times=[1, c, 1, 1])
         loss_kernels = DiceLoss(kernels, gt_kernels, new_masks)
