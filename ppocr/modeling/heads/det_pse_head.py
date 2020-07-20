@@ -125,8 +125,9 @@ class PSEHead(object):
             num_filters=self.out_channels,
             filter_size=1
         )
-        y = fluid.layers.sigmoid(y)
         y = fluid.layers.resize_nearest(input=y, scale=4)
+        if mode != 'train':
+            y = fluid.layers.sigmoid(y)
         predicts = {}
         predicts['maps'] = y
         return predicts

@@ -41,6 +41,9 @@ class PSELoss(object):
         gt_kernels = labels['shrink_maps'][:, :-1, :, :]
         masks = labels['masks']
 
+        texts = fluid.layers.sigmoid(texts)
+        kernels = fluid.layers.sigmoid(kernels)
+
         loss_texts = BalanceLoss(
             texts,
             gt_texts,
