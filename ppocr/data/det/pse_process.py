@@ -139,7 +139,7 @@ class PSEProcessTest(object):
         if 'max_side_len' in params:
             self.max_side_len = params['max_side_len']
         else:
-            self.max_side_len = 2400
+            self.max_side_len = 2240
 
     def resize_image_type0(self, im):
         """
@@ -155,14 +155,15 @@ class PSEProcessTest(object):
         resize_w = w
         resize_h = h
 
-        # limit the max side
-        if max(resize_h, resize_w) > max_side_len:
-            if resize_h > resize_w:
-                ratio = float(max_side_len) / resize_h
-            else:
-                ratio = float(max_side_len) / resize_w
-        else:
-            ratio = 1.
+        # resize long side to max_size
+        ratio = max_side_len * 1.0 / max(resize_h, resize_w)
+        # if max(resize_h, resize_w) < max_side_len:
+        #     if resize_h > resize_w:
+        #         ratio = float(max_side_len) / resize_h
+        #     else:
+        #         ratio = float(max_side_len) / resize_w
+        # else:
+        #     ratio = 1.
         resize_h = int(resize_h * ratio)
         resize_w = int(resize_w * ratio)
         if resize_h % 32 == 0:
