@@ -24,7 +24,7 @@ class PSEPostProcess(object):
         :param min_area:
         :return:
         '''
-        from .pse import pse_cpp
+        from .pse import pse_cpp,get_points
         kernal_num = len(kernels)
         if not kernal_num:
             return np.array([]), []
@@ -36,16 +36,21 @@ class PSEPostProcess(object):
                 continue
             label_values.append(label_idx)
         pred = pse_cpp(label, kernels, c=kernal_num)
-        pred = np.array(pred)
+        pred = pred.reshape(label.shape)
+
         bbox_list = []
         score_list = []
-        for label_value in label_values:
-            points = np.array(np.where(pred == label_value)).transpose((1, 0))[:, ::-1]
+        label_points = get_points(pred, score, label_num)
+        for label_value, label_point in label_points.items():
+            if label_value not in label_values:
+                continue
+            score_i = label_point[0]
+            label_point = label_point[2:]
+            points = np.array(label_point, dtype=int).reshape(-1, 2)
 
             if points.shape[0] < 800 / (self.scale * self.scale):
                 continue
 
-            score_i = np.mean(score[pred == label_value])
             if score_i < self.box_thresh:
                 continue
             score_list.append(score_i)

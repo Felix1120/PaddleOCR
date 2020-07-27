@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 namespace pse{
     //S5->S0, small->big
-    std::vector<std::vector<int32_t>> pse(
+    py::array_t<uint8_t> pse(
     py::array_t<int32_t, py::array::c_style> label_map,
     py::array_t<uint8_t, py::array::c_style> Sn,
     int c = 6)
@@ -28,25 +28,32 @@ namespace pse{
         if (pbuf_Sn.ndim != 3 || pbuf_Sn.shape[0] != c || pbuf_Sn.shape[1]!=h || pbuf_Sn.shape[2]!=w)
             throw std::runtime_error("Sn must have a shape of (c>0, h>0, w>0)");
 
-        std::vector<std::vector<int32_t>> res;
-        for (size_t i = 0; i<h; i++)
-            res.push_back(std::vector<int32_t>(w, 0));
+//        std::vector<std::vector<int32_t>> res;
+//        for (size_t i = 0; i<h; i++)
+//            res.push_back(std::vector<int32_t>(w, 0));
         auto ptr_label_map = static_cast<int32_t *>(pbuf_label_map.ptr);
         auto ptr_Sn = static_cast<uint8_t *>(pbuf_Sn.ptr);
+
+
+        auto res = py::array_t<uint8_t>(pbuf_label_map.size);
+        auto pbuf_res = res.request();
+        auto ptr_res = static_cast<uint8_t *>(pbuf_res.ptr);
 
         std::queue<std::tuple<int, int, int32_t>> q, next_q;
 
         for (size_t i = 0; i<h; i++)
         {
             auto p_label_map = ptr_label_map + i*w;
+            auto p_res = ptr_res + i*w;
             for(size_t j = 0; j<w; j++)
             {
                 int32_t label = p_label_map[j];
                 if (label>0)
                 {
                     q.push(std::make_tuple(i, j, label));
-                    res[i][j] = label;
+//                    res[i][j] = label;
                 }
+                p_res[j] = label;
             }
         }
 
@@ -70,12 +77,13 @@ namespace pse{
                 {
                     int index_y = y + dy[idx];
                     int index_x = x + dx[idx];
+                    auto p_res = ptr_res + index_y*w;
                     if (index_y<0 || index_y>=h || index_x<0 || index_x>=w)
                         continue;
-                    if (!p_Sn[index_y*w+index_x] || res[index_y][index_x]>0)
+                    if (!p_Sn[index_y*w+index_x] || p_res[index_x]>0)
                         continue;
                     q.push(std::make_tuple(index_y, index_x, l));
-                    res[index_y][index_x]=l;
+                    p_res[index_x]=l;
                     is_edge = false;
                 }
                 if (is_edge){
@@ -86,9 +94,60 @@ namespace pse{
         }
         return res;
     }
+
+    std::map<int,std::vector<float>> get_points(
+    py::array_t<int32_t, py::array::c_style> label_map,
+    py::array_t<float, py::array::c_style> score_map,
+    int label_num)
+    {
+        auto pbuf_label_map = label_map.request();
+        auto pbuf_score_map = score_map.request();
+        auto ptr_label_map = static_cast<int32_t *>(pbuf_label_map.ptr);
+        auto ptr_score_map = static_cast<float *>(pbuf_score_map.ptr);
+        int h = pbuf_label_map.shape[0];
+        int w = pbuf_label_map.shape[1];
+
+        std::map<int,std::vector<float>> point_dict;
+        std::vector<std::vector<float>> point_vector; // idx[0] 存储当前框的分数;idx[1] 存储当前框的像素点数量;idx[2:]存储当前框的像素点
+        for(int i=0;i<label_num;i++)
+        {
+            std::vector<float> point;
+            point.push_back(0);
+            point.push_back(0);
+            point_vector.push_back(point);
+        }
+        for (int i = 0; i<h; i++)
+        {
+            auto p_label_map = ptr_label_map + i*w;
+            auto p_score_map = ptr_score_map + i*w;
+            for(int j = 0; j<w; j++)
+            {
+                int32_t label = p_label_map[j];
+                if(label==0)
+                {
+                    continue;
+                }
+                float score = p_score_map[j];
+                point_vector[label][0] += score;
+                point_vector[label][1] += 1;
+                point_vector[label].push_back(j);
+                point_vector[label].push_back(i);
+            }
+        }
+        for(int i=0;i<label_num;i++)
+        {
+            if(point_vector[i].size() > 2)
+            {
+                point_vector[i][0] /= point_vector[i][1];
+                point_dict[i] = point_vector[i];
+            }
+        }
+        return point_dict;
+    }
 }
 
 PYBIND11_MODULE(pse, m){
     m.def("pse_cpp", &pse::pse, " re-implementation pse algorithm(cpp)", py::arg("label_map"), py::arg("Sn"), py::arg("c")=6);
+    m.def("get_points", &pse::get_points, " re-implementation pse algorithm(cpp)", py::arg("label_map"), py::arg("score_map"), py::arg("label_num"));
 }
 
