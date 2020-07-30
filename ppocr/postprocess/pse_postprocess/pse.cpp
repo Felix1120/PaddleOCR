@@ -14,7 +14,7 @@ namespace py = pybind11;
 
 namespace pse{
     //S5->S0, small->big
-    py::array_t<uint8_t> pse(
+    py::array_t<int32_t> pse(
     py::array_t<int32_t, py::array::c_style> label_map,
     py::array_t<uint8_t, py::array::c_style> Sn,
     int c = 6)
@@ -35,9 +35,9 @@ namespace pse{
         auto ptr_Sn = static_cast<uint8_t *>(pbuf_Sn.ptr);
 
 
-        auto res = py::array_t<uint8_t>(pbuf_label_map.size);
+        auto res = py::array_t<int32_t>(pbuf_label_map.size);
         auto pbuf_res = res.request();
-        auto ptr_res = static_cast<uint8_t *>(pbuf_res.ptr);
+        auto ptr_res = static_cast<int32_t *>(pbuf_res.ptr);
 
         std::queue<std::tuple<int, int, int32_t>> q, next_q;
 
